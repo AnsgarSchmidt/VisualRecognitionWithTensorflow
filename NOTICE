@@ -1,0 +1,13 @@
+TensorFlowOpenWhiskVisualClassifier 
+https://github.com/BDB
+© Copyright IBM Corp. 2017
+
+The following Node modules are used in Python / Docker but not included in the project:
+
+https://github.com/googlecodelabs/tensorflow-for-poets-2                     Apache License 2.0
+https://github.com/tensorflow                                                Apache Licence 2.0
+https://github.com/openstack/python-swiftclient                              Apache Licence 2.0
+https://github.com/openstack/python-keystoneclient                           Apache Licence 2.0
+https://flask.pocoo.org/                                                     BSD Licence
+https://github.com/tensorflow/tensorflow/tree/master/tensorflow/tools/docker Apache Licence 2.0
+
