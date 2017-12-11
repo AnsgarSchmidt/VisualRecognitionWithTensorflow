@@ -4,12 +4,52 @@ import base64
 import numpy               as     np
 import tensorflow          as     tf
 from   swiftclient.service import Connection
+import urllib.request
 
 app       = flask.Flask(__name__)
 app.debug = False
 graph     = tf.Graph()
 labels    = []
+modelNeedsToBeLoaded = True
 
+@app.route('/classify', methods=['GET'])
+def classify():
+    global modelNeedsToBeLoaded
+    try:
+        if (modelNeedsToBeLoaded == True):
+            modelNeedsToBeLoaded = False
+            init()            
+
+        imageUrl = flask.request.args.get('image-url', '')
+        file_name, headers = urllib.request.urlretrieve(imageUrl)
+        file_reader = tf.read_file(file_name, "file_reader")
+
+    except Exception as err:
+        response = flask.jsonify({'error': 'Issue with Object Storage credentials or with image URL'})
+        response.status_code = 400
+        return response
+    
+    image_reader     = tf.image.decode_jpeg(file_reader, channels=3, name='jpeg_reader')
+    float_caster     = tf.cast(image_reader, tf.float32)
+    dims_expander    = tf.expand_dims(float_caster, 0)
+    resized          = tf.image.resize_bilinear(dims_expander, [224, 224])
+    normalized       = tf.divide(tf.subtract(resized, [128]), [128])
+    input_operation  = graph.get_operation_by_name("import/input")
+    output_operation = graph.get_operation_by_name("import/final_result")
+    tf_picture       = tf.Session().run(normalized)
+
+    with tf.Session(graph=graph) as sess:
+        results = np.squeeze(sess.run(output_operation.outputs[0], {input_operation.outputs[0]: tf_picture}))
+        index   = results.argsort()
+        answer  = {}
+
+        for i in index:
+            answer[labels[i]] = float(results[i])
+
+        response = flask.jsonify(answer)
+        response.status_code = 200
+
+    return response
 
 @app.route('/init', methods=['POST'])
 def init():
